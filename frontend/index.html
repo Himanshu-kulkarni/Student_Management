@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EduTrack — Student Management System</title>
+  <style>
+    /* ============================================================
+       DESIGN TOKENS & RESET
+    ============================================================ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-deep:        #0a0e1a;
+      --bg-mid:         #0f1525;
+      --bg-card:        rgba(255,255,255,0.04);
+      --bg-card-hover:  rgba(255,255,255,0.08);
+      --glass:          rgba(255,255,255,0.06);
+      --glass-border:   rgba(255,255,255,0.12);
+      --accent-blue:    #4f8ef7;
+      --accent-violet:  #8b5cf6;
+      --accent-cyan:    #22d3ee;
+      --accent-green:   #10b981;
+      --accent-rose:    #f43f5e;
+      --accent-amber:   #f59e0b;
+      --grad-primary:   linear-gradient(135deg, #4f8ef7 0%, #8b5cf6 100%);
+      --grad-teal:      linear-gradient(135deg, #22d3ee 0%, #4f8ef7 100%);
+      --grad-rose:      linear-gradient(135deg, #f43f5e 0%, #f59e0b 100%);
+      --grad-green:     linear-gradient(135deg, #10b981 0%, #22d3ee 100%);
+      --text-primary:   #e8eaf6;
+      --text-secondary: #8892b0;
+      --text-muted:     #4a5568;
+      --sidebar-w:      260px;
+      --radius-sm:      8px;
+      --radius-md:      14px;
+      --radius-lg:      20px;
+      --shadow-glow:    0 0 40px rgba(79,142,247,0.15);
+      --transition:     0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      overflow-x: hidden;
+    }
+
+    /* ============================================================
+       ANIMATED BACKGROUND MESH
+    ============================================================ */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 40%, rgba(79,142,247,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 70%, rgba(139,92,246,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 60% at 50% 10%, rgba(34,211,238,0.05) 0%, transparent 60%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ============================================================
+       SIDEBAR
+    ============================================================ */
+    .sidebar {
+      width: var(--sidebar-w);
+      min-height: 100vh;
+      background: rgba(10,14,26,0.95);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-right: 1px solid var(--glass-border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      z-index: 100;
+      transition: transform var(--transition);
+    }
+
+    .sidebar-logo {
+      padding: 28px 24px 20px;
+      border-bottom: 1px solid var(--glass-border);
+    }
+
+    .sidebar-logo .logo-icon {
+      width: 40px; height: 40px;
+      background: var(--grad-primary);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 20px rgba(79,142,247,0.4);
+    }
+
+    .sidebar-logo h1 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      background: var(--grad-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .sidebar-logo p {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .sidebar-nav { flex: 1; padding: 16px 12px; overflow-y: auto; }
+
+    .nav-section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      padding: 8px 12px 6px;
+      margin-top: 8px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 14px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all var(--transition);
+      margin-bottom: 2px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      border: 1px solid transparent;
+      position: relative;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-card-hover);
+      color: var(--text-primary);
+      border-color: var(--glass-border);
+    }
+
+    .nav-item.active {
+      background: linear-gradient(135deg, rgba(79,142,247,0.15), rgba(139,92,246,0.15));
+      color: #fff;
+      border-color: rgba(79,142,247,0.3);
+    }
+
+    .nav-item.active::before {
+      content: '';
+      position: absolute;
+      left: -1px; top: 20%; bottom: 20%;
+      width: 3px;
+      background: var(--grad-primary);
+      border-radius: 0 4px 4px 0;
+    }
+
+    .nav-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--glass-border);
+    }
+
+    .api-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent-green);
+      box-shadow: 0 0 6px var(--accent-green);
+      flex-shrink: 0;
+      animation: pulse 2s infinite;
+    }
+
+    .status-dot.offline { background: var(--accent-rose); box-shadow: 0 0 6px var(--accent-rose); animation: none; }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* Hamburger for mobile */
+    .hamburger {
+      display: none;
+      position: fixed;
+      top: 16px; left: 16px;
+      z-index: 200;
+      width: 40px; height: 40px;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 5px;
+      backdrop-filter: blur(12px);
+    }
+
+    .hamburger span {
+      display: block;
+      width: 20px; height: 2px;
+      background: var(--text-primary);
+      border-radius: 2px;
+      transition: all var(--transition);
+    }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 90;
+      backdrop-filter: blur(4px);
+    }
+
+    /* ============================================================
+       MAIN CONTENT
+    ============================================================ */
+    .main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(10,14,26,0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--glass-border);
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .page-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .topbar-clock {
+      font-size: 13px;
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+      font-weight: 500;
+    }
+
+    .topbar-clock span {
+      color: var(--accent-cyan);
+      font-weight: 700;
+    }
+
+    /* ============================================================
+       PAGES / VIEWS
+    ============================================================ */
+    .page { display: none; padding: 32px; animation: fadeIn 0.3s ease; }
+    .page.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ============================================================
+       PAGE HEADER
+    ============================================================ */
+    .page-header { margin-bottom: 28px; }
+    .page-header h2 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
+    .page-header p { font-size: 14px; color: var(--text-secondary); margin-top: 4px; }
+    .page-header .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-bottom: 8px;
+    }
+    .badge-blue  { background: rgba(79,142,247,0.15); color: var(--accent-blue); border: 1px solid rgba(79,142,247,0.3); }
+    .badge-violet{ background: rgba(139,92,246,0.15); color: var(--accent-violet); border: 1px solid rgba(139,92,246,0.3); }
+    .badge-green { background: rgba(16,185,129,0.15); color: var(--accent-green); border: 1px solid rgba(16,185,129,0.3); }
+    .badge-rose  { background: rgba(244,63,94,0.15);  color: var(--accent-rose);  border: 1px solid rgba(244,63,94,0.3); }
+    .badge-amber { background: rgba(245,158,11,0.15); color: var(--accent-amber); border: 1px solid rgba(245,158,11,0.3); }
+    .badge-cyan  { background: rgba(34,211,238,0.15); color: var(--accent-cyan);  border: 1px solid rgba(34,211,238,0.3); }
+
+    /* ============================================================
+       CARDS
+    ============================================================ */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      transition: all var(--transition);
+    }
+
+    .card:hover { background: var(--bg-card-hover); border-color: rgba(255,255,255,0.18); }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      padding: 22px;
+      position: relative;
+      overflow: hidden;
+      transition: all var(--transition);
+      cursor: default;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity var(--transition);
+    }
+
+    .stat-card:hover::before { opacity: 1; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-glow); }
+
+    .stat-card.blue::before  { background: linear-gradient(135deg, rgba(79,142,247,0.08), transparent); }
+    .stat-card.violet::before{ background: linear-gradient(135deg, rgba(139,92,246,0.08), transparent); }
+    .stat-card.green::before { background: linear-gradient(135deg, rgba(16,185,129,0.08), transparent); }
+    .stat-card.cyan::before  { background: linear-gradient(135deg, rgba(34,211,238,0.08), transparent); }
+
+    .stat-icon {
+      width: 44px; height: 44px;
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      margin-bottom: 14px;
+    }
+    .stat-icon.blue   { background: rgba(79,142,247,0.15);  }
+    .stat-icon.violet { background: rgba(139,92,246,0.15); }
+    .stat-icon.green  { background: rgba(16,185,129,0.15);  }
+    .stat-icon.cyan   { background: rgba(34,211,238,0.15);  }
+
+    .stat-value { font-size: 28px; font-weight: 800; letter-spacing: -1px; line-height: 1; }
+    .stat-label { font-size: 12px; color: var(--text-secondary); margin-top: 4px; font-weight: 500; }
+
+    /* ============================================================
+       FORMS
+    ============================================================ */
+    .form-group { margin-bottom: 20px; }
+    .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px; letter-spacing: 0.3px; }
+    .form-input {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      font-size: 14px;
+      padding: 12px 16px;
+      outline: none;
+      transition: all var(--transition);
+      font-family: inherit;
+    }
+    .form-input::placeholder { color: var(--text-muted); }
+    .form-input:focus {
+      border-color: var(--accent-blue);
+      background: rgba(79,142,247,0.06);
+      box-shadow: 0 0 0 3px rgba(79,142,247,0.15);
+    }
+
+    .form-card { max-width: 520px; }
+
+    /* ============================================================
+       BUTTONS
+    ============================================================ */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 11px 24px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      outline: none;
+      transition: all var(--transition);
+      position: relative;
+      overflow: hidden;
+      font-family: inherit;
+      letter-spacing: 0.2px;
+    }
+
+    .btn::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0);
+      transition: background var(--transition);
+    }
+
+    .btn:hover::after { background: rgba(255,255,255,0.08); }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary { background: var(--grad-primary); color: #fff; box-shadow: 0 4px 20px rgba(79,142,247,0.35); }
+    .btn-primary:hover { box-shadow: 0 6px 28px rgba(79,142,247,0.5); transform: translateY(-1px); }
+
+    .btn-danger { background: var(--grad-rose); color: #fff; box-shadow: 0 4px 20px rgba(244,63,94,0.3); }
+    .btn-danger:hover { box-shadow: 0 6px 28px rgba(244,63,94,0.45); transform: translateY(-1px); }
+
+    .btn-success { background: var(--grad-green); color: #fff; box-shadow: 0 4px 20px rgba(16,185,129,0.3); }
+    .btn-success:hover { box-shadow: 0 6px 28px rgba(16,185,129,0.45); transform: translateY(-1px); }
+
+    .btn-ghost {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border: 1px solid var(--glass-border);
+    }
+    .btn-ghost:hover { background: var(--bg-card-hover); }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+      box-shadow: none !important;
+    }
+
+    .btn .spinner {
+      display: none;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    .btn.loading .btn-text { display: none; }
+    .btn.loading .spinner { display: block; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ============================================================
+       TABLE
+    ============================================================ */
+    .table-wrapper {
+      border-radius: var(--radius-md);
+      border: 1px solid var(--glass-border);
+      overflow: hidden;
+      background: var(--bg-card);
+    }
+
+    .table-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--glass-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .table-header-left h3 { font-size: 15px; font-weight: 600; }
+    .table-header-left p  { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+    .table-search {
+      display: flex;
+      align-items: center;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-sm);
+      padding: 0 12px;
+      gap: 8px;
+      flex: 1;
+      max-width: 280px;
+    }
+
+    .table-search input {
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text-primary);
+      font-size: 13px;
+      padding: 9px 0;
+      width: 100%;
+      font-family: inherit;
+    }
+
+    .table-search input::placeholder { color: var(--text-muted); }
+    .table-search .search-icon { color: var(--text-muted); font-size: 14px; }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead th {
+      padding: 12px 20px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--glass-border);
+      background: rgba(0,0,0,0.2);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      transition: background var(--transition);
+    }
+
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,0.03); }
+
+    tbody td {
+      padding: 14px 20px;
+      font-size: 14px;
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    .student-avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--grad-primary);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 700;
+      color: #fff;
+      margin-right: 10px;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
+
+    .id-badge {
+      display: inline-block;
+      background: rgba(79,142,247,0.12);
+      color: var(--accent-blue);
+      border: 1px solid rgba(79,142,247,0.25);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 2px 9px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--text-secondary);
+    }
+
+    .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+    .empty-state p { font-size: 14px; }
+
+    /* ============================================================
+       RESULT CARD (Search)
+    ============================================================ */
+    .result-card {
+      display: none;
+      border-radius: var(--radius-lg);
+      border: 1px solid rgba(79,142,247,0.25);
+      background: linear-gradient(135deg, rgba(79,142,247,0.06), rgba(139,92,246,0.06));
+      padding: 28px;
+      margin-top: 20px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--grad-primary);
+    }
+
+    .result-card.visible { display: block; animation: fadeIn 0.3s ease; }
+
+    .result-card .result-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .result-avatar {
+      width: 56px; height: 56px;
+      border-radius: 50%;
+      background: var(--grad-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      box-shadow: 0 4px 20px rgba(79,142,247,0.4);
+    }
+
+    .result-info h3 { font-size: 20px; font-weight: 700; }
+    .result-info p  { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+
+    .result-fields { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; }
+
+    .result-field {
+      background: rgba(0,0,0,0.2);
+      border-radius: var(--radius-sm);
+      padding: 14px 16px;
+      border: 1px solid var(--glass-border);
+    }
+
+    .result-field .field-label { font-size: 11px; color: var(--text-muted); font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 4px; }
+    .result-field .field-value { font-size: 15px; font-weight: 600; }
+
+    /* ============================================================
+       HOME — HERO
+    ============================================================ */
+    .hero {
+      background: linear-gradient(135deg, rgba(79,142,247,0.08), rgba(139,92,246,0.08));
+      border: 1px solid rgba(79,142,247,0.2);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      margin-bottom: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '🎓';
+      position: absolute;
+      right: 40px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 96px;
+      opacity: 0.08;
+    }
+
+    .hero h2 {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 10px;
+      line-height: 1.2;
+    }
+
+    .hero h2 span {
+      background: var(--grad-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero p {
+      font-size: 15px;
+      color: var(--text-secondary);
+      max-width: 520px;
+      line-height: 1.6;
+    }
+
+    .hero-clock {
+      margin-top: 28px;
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+
+    .clock-block {
+      background: rgba(0,0,0,0.3);
+      border-radius: var(--radius-sm);
+      padding: 12px 20px;
+      border: 1px solid var(--glass-border);
+      text-align: center;
+      min-width: 130px;
+    }
+
+    .clock-block .clock-label { font-size: 10px; color: var(--text-muted); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+    .clock-block .clock-value { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--accent-cyan); letter-spacing: 1px; }
+    .clock-block .clock-date  { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+
+    /* ============================================================
+       DASHBOARD
+    ============================================================ */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 960px) { .dashboard-grid { grid-template-columns: 1fr; } }
+
+    .info-list { list-style: none; }
+    .info-list li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      font-size: 14px;
+    }
+    .info-list li:last-child { border-bottom: none; }
+    .info-list .info-key { color: var(--text-secondary); font-weight: 500; }
+    .info-list .info-val { font-weight: 600; color: var(--text-primary); text-align: right; }
+    .info-list .info-val.highlight { color: var(--accent-cyan); font-variant-numeric: tabular-nums; }
+
+    /* ============================================================
+       ABOUT
+    ============================================================ */
+    .tech-stack {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .tech-tag {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid var(--glass-border);
+      border-radius: 30px;
+      padding: 7px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all var(--transition);
+    }
+
+    .tech-tag:hover {
+      background: rgba(255,255,255,0.09);
+      transform: translateY(-1px);
+    }
+
+    /* ============================================================
+       TOAST NOTIFICATIONS
+    ============================================================ */
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .toast {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 18px;
+      border-radius: var(--radius-md);
+      font-size: 14px;
+      max-width: 340px;
+      pointer-events: all;
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      animation: slideIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .toast::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 2px;
+      animation: shrink 3.5s linear forwards;
+    }
+
+    @keyframes shrink { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+    .toast.success {
+      background: rgba(16,185,129,0.12);
+      border-color: rgba(16,185,129,0.3);
+      color: #ecfdf5;
+    }
+
+    .toast.success::after { background: var(--accent-green); }
+
+    .toast.error {
+      background: rgba(244,63,94,0.12);
+      border-color: rgba(244,63,94,0.3);
+      color: #fff1f2;
+    }
+
+    .toast.error::after { background: var(--accent-rose); }
+
+    .toast.warning {
+      background: rgba(245,158,11,0.12);
+      border-color: rgba(245,158,11,0.3);
+      color: #fffbeb;
+    }
+
+    .toast.warning::after { background: var(--accent-amber); }
+
+    .toast-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+    .toast-body .toast-title { font-weight: 700; margin-bottom: 2px; font-size: 14px; }
+    .toast-body .toast-msg   { font-size: 13px; opacity: 0.85; }
+
+    .toast-close {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      opacity: 0.6;
+      font-size: 16px;
+      padding: 0 0 0 8px;
+      flex-shrink: 0;
+      transition: opacity 0.2s;
+    }
+
+    .toast-close:hover { opacity: 1; }
+
+    .toast.hide {
+      animation: slideOut 0.3s ease forwards;
+    }
+
+    @keyframes slideIn  { from { opacity:0; transform: translateX(40px); } to { opacity:1; transform: translateX(0); } }
+    @keyframes slideOut { from { opacity:1; transform: translateX(0);    } to { opacity:0; transform: translateX(40px); } }
+
+    /* ============================================================
+       MODAL (confirmation)
+    ============================================================ */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(8px);
+      z-index: 500;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      background: var(--bg-mid);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      max-width: 420px;
+      width: calc(100% - 40px);
+      position: relative;
+      animation: modalIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      overflow: hidden;
+    }
+
+    .modal::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--grad-rose);
+    }
+
+    @keyframes modalIn { from { opacity:0; transform:scale(0.9); } to { opacity:1; transform:scale(1); } }
+
+    .modal-icon { font-size: 40px; margin-bottom: 16px; }
+    .modal h3   { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .modal p    { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+
+    .modal-actions { display: flex; gap: 12px; margin-top: 24px; justify-content: flex-end; }
+
+    /* ============================================================
+       SCROLLBAR
+    ============================================================ */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); box-shadow: 20px 0 60px rgba(0,0,0,0.5); }
+      .main { margin-left: 0; }
+      .hamburger { display: flex; }
+      .overlay.open { display: block; }
+      .page { padding: 20px; }
+      .topbar { padding: 12px 20px; padding-left: 70px; }
+      .hero { padding: 24px; }
+      .hero::before { display: none; }
+      .hero h2 { font-size: 24px; }
+      .stat-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+      .table-header { flex-direction: column; align-items: flex-start; }
+      .table-search { max-width: 100%; width: 100%; }
+    }
+
+    @media (max-width: 480px) {
+      .stat-grid { grid-template-columns: 1fr; }
+      .hero-clock { flex-direction: column; }
+      .modal-actions { flex-direction: column-reverse; }
+      .modal-actions .btn { width: 100%; }
+    }
+
+    /* ============================================================
+       DIVIDER
+    ============================================================ */
+    .divider { border: none; border-top: 1px solid var(--glass-border); margin: 24px 0; }
+
+    /* ============================================================
+       UTILITIES
+    ============================================================ */
+    .mt-8 { margin-top: 8px; }
+    .mt-16 { margin-top: 16px; }
+    .mt-20 { margin-top: 20px; }
+    .flex { display: flex; }
+    .gap-12 { gap: 12px; }
+    .text-muted { color: var(--text-secondary); font-size: 13px; }
+    .fw-700 { font-weight: 700; }
+    .grad-text {
+      background: var(--grad-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================
+     HAMBURGER
+============================================================ -->
+<button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Toggle sidebar">
+  <span></span><span></span><span></span>
+</button>
+<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+<!-- ============================================================
+     SIDEBAR
+============================================================ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🎓</div>
+    <h1>EduTrack</h1>
+    <p>Student Management</p>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">Overview</div>
+
+    <div class="nav-item active" onclick="showPage('home')" data-page="home">
+      <span class="nav-icon">🏠</span> Home
+    </div>
+    <div class="nav-item" onclick="showPage('dashboard')" data-page="dashboard">
+      <span class="nav-icon">📊</span> Dashboard
+    </div>
+
+    <div class="nav-section-label">Students</div>
+
+    <div class="nav-item" onclick="showPage('add')" data-page="add">
+      <span class="nav-icon">➕</span> Add Student
+    </div>
+    <div class="nav-item" onclick="showPage('view')" data-page="view">
+      <span class="nav-icon">📋</span> View Students
+    </div>
+    <div class="nav-item" onclick="showPage('search')" data-page="search">
+      <span class="nav-icon">🔍</span> Search Student
+    </div>
+
+    <div class="nav-section-label">Manage</div>
+
+    <div class="nav-item" onclick="showPage('update')" data-page="update">
+      <span class="nav-icon">✏️</span> Update Student
+    </div>
+    <div class="nav-item" onclick="showPage('delete')" data-page="delete">
+      <span class="nav-icon">🗑️</span> Delete Student
+    </div>
+
+    <div class="nav-section-label">System</div>
+
+    <div class="nav-item" onclick="showPage('about')" data-page="about">
+      <span class="nav-icon">ℹ️</span> About
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="api-status">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="apiStatusText">API Connected</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ============================================================
+     MAIN
+============================================================ -->
+<main class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="page-title" id="topbarTitle">🏠 Home</div>
+    <div class="topbar-right">
+      <div class="topbar-clock">
+        <span id="topClock">--:--:--</span> &nbsp;·&nbsp; <span id="topDate">-- --- ----</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PAGE: HOME
+  ══════════════════════════════════ -->
+  <div class="page active" id="page-home">
+    <div class="hero">
+      <div class="badge badge-blue">Student Management System</div>
+      <h2>Welcome to <span>EduTrack</span></h2>
+      <p>A modern, efficient platform to manage your student records. Create, view, search, update and delete students — all from a single, clean interface connected to a live FastAPI backend.</p>
+
+      <div class="hero-clock">
+        <div class="clock-block">
+          <div class="clock-label">Live Time</div>
+          <div class="clock-value" id="homeClock">--:--:--</div>
+        </div>
+        <div class="clock-block">
+          <div class="clock-label">Today</div>
+          <div class="clock-date" id="homeDate">-- --- ----</div>
+        </div>
+        <div class="clock-block">
+          <div class="clock-label">Total Students</div>
+          <div class="clock-value" id="homeCount" style="color:var(--accent-violet)">—</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card blue" onclick="showPage('add')">
+        <div class="stat-icon blue">➕</div>
+        <div class="stat-value grad-text" id="homeStatTotal">—</div>
+        <div class="stat-label">Total Students Enrolled</div>
+      </div>
+      <div class="stat-card violet">
+        <div class="stat-icon violet">📡</div>
+        <div class="stat-value" style="color:var(--accent-violet)" id="homeStatStatus">—</div>
+        <div class="stat-label">API Connection Status</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon green">📅</div>
+        <div class="stat-value" style="color:var(--accent-green);font-size:16px;margin-top:6px" id="homeStatDate">—</div>
+        <div class="stat-label">Session Date</div>
+      </div>
+      <div class="stat-card cyan">
+        <div class="stat-icon cyan">⏱️</div>
+        <div class="stat-value" style="color:var(--accent-cyan);font-size:20px;margin-top:4px" id="homeStatTime">—</div>
+        <div class="stat-label">Current Time</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PAGE: ADD STUDENT
+  ══════════════════════════════════ -->
+  <div class="page" id="page-add">
+    <div class="page-header">
+      <div class="badge badge-green">New Record</div>
+      <h2>Add Student</h2>
+      <p>Fill in the student's name to create a new record in the system.</p>
+    </div>
+
+    <div class="card form-card">
+      <div class="form-group">
+        <label class="form-label" for="addName">Student Full Name</label>
+        <input class="form-input" type="text" id="addName" placeholder="e.g. Rohan Sharma" autocomplete="off" />
+      </div>
+
+      <button class="btn btn-primary" id="addBtn" onclick="addStudent()">
+        <span class="spinner"></span>
+        <span class="btn-text">➕ &nbsp; Add Student</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PAGE: VIEW STUDENTS
+  ══════════════════════════════════ -->
+  <div class="page" id="page-view">
+    <div class="page-header">
+      <div class="badge badge-blue">All Records</div>
+      <h2>View Students</h2>
+      <p>Browse and filter all student records fetched from the database.</p>
+    </div>
+
+    <div class="table-wrapper">
+      <div class="table-header">
+        <div class="table-header-left">
+          <h3>Student Directory</h3>
+          <p id="viewCount">Loading…</p>
+        </div>
+        <div style="display:flex;gap:10px;flex:1;justify-content:flex-end;flex-wrap:wrap;">
+          <div class="table-search">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="viewFilter" placeholder="Filter by name or ID…" oninput="filterTable()" autocomplete="off" />
+          </div>
+          <button class="btn btn-ghost" id="refreshBtn" onclick="loadStudents()">
+            <span class="spinner"></span>
+            <span class="btn-text">⟳ Refresh</span>
+          </button>
+        </div>
+      </div>
+
+      <div id="viewTableArea">
+        <div class="empty-state">
+          <div class="empty-icon">📋</div>
+          <p>Loading students…</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PAGE: SEARCH STUDENT
+  ══════════════════════════════════ -->
+  <div class="page" id="page-search">
+    <div class="page-header">
+      <div class="badge badge-cyan">Lookup</div>
+      <h2>Search Student</h2>
+      <p>Retrieve a specific student's record using their unique ID.</p>
+    </div>
+
+    <div class="card form-card">
+      <div class="form-group">
+        <label class="form-label" for="searchId">Student ID</label>
+        <input class="form-input" type="number" id="searchId" placeholder="e.g. 3" min="1" autocomplete="off" />
+      </div>
+      <button class="btn btn-primary" id="searchBtn" onclick="searchStudent()">
+        <span class="spinner"></span>
+        <span class="btn-text">🔍 &nbsp; Search</span>
+      </button>
+    </div>
+
+    <div class="result-card" id="searchResult">
+      <div class="result-header">
+        <div class="result-avatar" id="searchAvatar">?</div>
+        <div class="result-info">
+          <h3 id="searchName">—</h3>
+          <p id="searchSubtitle">Student Record</p>
+        </div>
+      </div>
+      <div class="result-fields">
+        <div class="result-field">
+          <div class="field-label">Student ID</div>
+          <div class="field-value grad-text" id="searchIdVal">—</div>
+        </div>
+        <div class="result-field">
+          <div class="field-label">Full Name</div>
+          <div class="field-value" id="searchNameVal">—</div>
+        </div>
+        <div class="result-field">
+          <div class="field-label">Status</div>
+          <div class="field-value" style="color:var(--accent-green)">✅ Active</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PAGE: UPDATE STUDENT
+  ══════════════════════════════════ -->
+  <div class="page" id="page-update">
+    <div class="page-header">
+      <div class="badge badge-amber">Edit Record</div>
+      <h2>Update Student</h2>
+      <p>Modify a student's information by entering their ID and the updated name.</p>
+    </div>
+
+    <div class="card form-card">
+      <div class="form-group">
+        <label class="form-label" for="updateId">Student ID</label>
+        <input class="form-input" type="number" id="updateId" placeholder="e.g. 5" min="1" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="updateName">New Name</label>
+        <input class="form-input" type="text" id="updateName" placeholder="e.g. Priya Mehta" autocomplete="off" />
+      </div>
+      <button class="btn btn-success" id="updateBtn" onclick="updateStudent()">
+        <span class="spinner"></span>
+        <span class="btn-text">✏️ &nbsp; Update Student</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PAGE: DELETE STUDENT
+  ══════════════════════════════════ -->
+  <div class="page" id="page-delete">
+    <div class="page-header">
+      <div class="badge badge-rose">Danger Zone</div>
+      <h2>Delete Student</h2>
+      <p>Permanently remove a student record from the system. This action cannot be undone.</p>
+    </div>
+
+    <div class="card form-card">
+      <div class="form-group">
+        <label class="form-label" for="deleteId">Student ID</label>
+        <input class="form-input" type="number" id="deleteId" placeholder="e.g. 7" min="1" autocomplete="off" />
+      </div>
+      <button class="btn btn-danger" id="deleteBtn" onclick="confirmDelete()">
+        <span class="spinner"></span>
+        <span class="btn-text">🗑️ &nbsp; Delete Student</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PAGE: DASHBOARD
+  ══════════════════════════════════ -->
+  <div class="page" id="page-dashboard">
+    <div class="page-header">
+      <div class="badge badge-violet">Analytics</div>
+      <h2>Dashboard</h2>
+      <p>System overview, live stats, and a snapshot of recent student records.</p>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card blue">
+        <div class="stat-icon blue">👥</div>
+        <div class="stat-value grad-text" id="dashTotal">—</div>
+        <div class="stat-label">Total Students</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon green">📡</div>
+        <div class="stat-value" style="color:var(--accent-green)" id="dashApiStatus">—</div>
+        <div class="stat-label">API Status</div>
+      </div>
+      <div class="stat-card cyan">
+        <div class="stat-icon cyan">🕒</div>
+        <div class="stat-value" style="color:var(--accent-cyan);font-size:18px;margin-top:6px" id="dashTime">—</div>
+        <div class="stat-label">Last Refresh</div>
+      </div>
+      <div class="stat-card violet">
+        <div class="stat-icon violet">📅</div>
+        <div class="stat-value" style="color:var(--accent-violet);font-size:16px;margin-top:6px" id="dashDate">—</div>
+        <div class="stat-label">Current Date</div>
+      </div>
+    </div>
+
+    <div class="dashboard-grid">
+      <div class="card">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+          <div>
+            <div style="font-size:15px;font-weight:700;">Recent Students</div>
+            <div class="text-muted mt-8">Latest 5 records</div>
+          </div>
+          <button class="btn btn-ghost" style="padding:8px 14px;font-size:12px;" id="dashRefreshBtn" onclick="updateDashboard()">
+            <span class="spinner"></span>
+            <span class="btn-text">⟳ Refresh</span>
+          </button>
+        </div>
+        <div id="dashTable">
+          <div class="empty-state"><div class="empty-icon">📊</div><p>Click Refresh to load data</p></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div style="font-size:15px;font-weight:700;margin-bottom:16px;">System Info</div>
+        <ul class="info-list">
+          <li><span class="info-key">Backend</span><span class="info-val">FastAPI</span></li>
+          <li><span class="info-key">Database</span><span class="info-val">PostgreSQL</span></li>
+          <li><span class="info-key">Base URL</span><span class="info-val" style="font-size:12px;color:var(--accent-cyan)">127.0.0.1:8000</span></li>
+          <li><span class="info-key">Live Clock</span><span class="info-val highlight" id="dashLiveClock">--:--:--</span></li>
+          <li><span class="info-key">Date</span><span class="info-val highlight" id="dashLiveDate">—</span></li>
+          <li><span class="info-key">Refresh Time</span><span class="info-val highlight" id="dashRefreshTime">—</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════
+       PAGE: ABOUT
+  ══════════════════════════════════ -->
+  <div class="page" id="page-about">
+    <div class="page-header">
+      <div class="badge badge-violet">About</div>
+      <h2>About EduTrack</h2>
+      <p>Project details, technology stack, and developer information.</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;">
+      <div class="card">
+        <div style="font-size:36px;margin-bottom:12px;">🎓</div>
+        <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">EduTrack SMS</h3>
+        <p class="text-muted" style="line-height:1.7;">A complete Student Management System built as a full-stack demonstration project. The frontend is a single-file vanilla SPA, communicating with a FastAPI + PostgreSQL backend over REST.</p>
+        <hr class="divider" />
+        <div style="font-size:13px;color:var(--text-secondary);">Version <strong style="color:var(--text-primary);">1.0.0</strong> &nbsp;·&nbsp; MIT License</div>
+      </div>
+
+      <div class="card">
+        <div style="font-size:15px;font-weight:700;margin-bottom:12px;">🛠 Technology Stack</div>
+        <div class="tech-stack">
+          <div class="tech-tag">🐍 Python</div>
+          <div class="tech-tag">⚡ FastAPI</div>
+          <div class="tech-tag">🐘 PostgreSQL</div>
+          <div class="tech-tag">🌐 HTML5</div>
+          <div class="tech-tag">🎨 CSS3</div>
+          <div class="tech-tag">⚙️ Vanilla JS</div>
+          <div class="tech-tag">🔗 REST API</div>
+          <div class="tech-tag">📦 SQLAlchemy</div>
+        </div>
+        <hr class="divider" />
+        <div style="font-size:13px;color:var(--text-secondary);">No external JS libraries · No CSS frameworks · Single HTML file</div>
+      </div>
+
+      <div class="card">
+        <div style="font-size:36px;margin-bottom:12px;">👨‍💻</div>
+        <h3 style="font-size:18px;font-weight:700;margin-bottom:8px;">Developer</h3>
+        <ul class="info-list">
+          <li><span class="info-key">Name</span><span class="info-val">Your Name Here</span></li>
+          <li><span class="info-key">Role</span><span class="info-val">Full-Stack Developer</span></li>
+          <li><span class="info-key">Tech Focus</span><span class="info-val">Python · Web</span></li>
+          <li><span class="info-key">Year</span><span class="info-val">2026</span></li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div style="font-size:15px;font-weight:700;margin-bottom:12px;">📡 API Endpoints</div>
+        <ul class="info-list" style="font-family:monospace;font-size:12px;">
+          <li><span class="info-key" style="color:var(--accent-green)">GET</span><span class="info-val">/students</span></li>
+          <li><span class="info-key" style="color:var(--accent-blue)">POST</span><span class="info-val">/students?name=…</span></li>
+          <li><span class="info-key" style="color:var(--accent-green)">GET</span><span class="info-val">/students/{id}</span></li>
+          <li><span class="info-key" style="color:var(--accent-amber)">PUT</span><span class="info-val">/students/{id}?name=…</span></li>
+          <li><span class="info-key" style="color:var(--accent-rose)">DELETE</span><span class="info-val">/students/{id}</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ============================================================
+     TOAST CONTAINER
+============================================================ -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ============================================================
+     CONFIRMATION MODAL
+============================================================ -->
+<div class="modal-backdrop" id="deleteModal">
+  <div class="modal">
+    <div class="modal-icon">⚠️</div>
+    <h3>Confirm Deletion</h3>
+    <p id="modalMessage">Are you sure you want to permanently delete this student? This action cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-danger" id="confirmDeleteBtn" onclick="deleteStudent()">
+        <span class="spinner"></span>
+        <span class="btn-text">🗑️ Delete</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     JAVASCRIPT
+============================================================ -->
+<script>
+  /* ============================================================
+     CONSTANTS
+  ============================================================ */
+  const BASE_URL = 'http://127.0.0.1:8000';
+
+  /* ============================================================
+     STATE
+  ============================================================ */
+  let allStudents = [];
+  let currentPage = 'home';
+  let apiOnline = false;
+
+  /* ============================================================
+     PAGE ROUTING — Single Page Application
+  ============================================================ */
+  const pageTitles = {
+    home:      '🏠 Home',
+    add:       '➕ Add Student',
+    view:      '📋 View Students',
+    search:    '🔍 Search Student',
+    update:    '✏️ Update Student',
+    delete:    '🗑️ Delete Student',
+    dashboard: '📊 Dashboard',
+    about:     'ℹ️ About'
+  };
+
+  function showPage(pageName) {
+    // Deactivate all pages
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+    // Activate target page
+    document.getElementById('page-' + pageName).classList.add('active');
+    document.querySelector(`[data-page="${pageName}"]`).classList.add('active');
+    document.getElementById('topbarTitle').textContent = pageTitles[pageName] || pageName;
+    currentPage = pageName;
+
+    // Close sidebar on mobile
+    if (window.innerWidth <= 768) closeSidebar();
+
+    // Page-specific actions
+    if (pageName === 'view')      loadStudents();
+    if (pageName === 'dashboard') updateDashboard();
+    if (pageName === 'home')      loadHomeStats();
+
+    // Clear inputs & results on navigation
+    if (pageName === 'search') {
+      document.getElementById('searchResult').classList.remove('visible');
+    }
+  }
+
+  /* ============================================================
+     SIDEBAR TOGGLE (mobile)
+  ============================================================ */
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('overlay').classList.toggle('open');
+  }
+
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('overlay').classList.remove('open');
+  }
+
+  /* ============================================================
+     CLOCK — runs every second
+  ============================================================ */
+  function updateClock() {
+    const now   = new Date();
+    const time  = now.toLocaleTimeString('en-IN', { hour12: false });
+    const date  = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+    const dateShort = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+    // Topbar
+    document.getElementById('topClock').textContent = time;
+    document.getElementById('topDate').textContent  = dateShort;
+
+    // Home page
+    const hc = document.getElementById('homeClock');
+    const hd = document.getElementById('homeDate');
+    const hst = document.getElementById('homeStatTime');
+    const hsd = document.getElementById('homeStatDate');
+    if (hc)  hc.textContent  = time;
+    if (hd)  hd.textContent  = date;
+    if (hst) hst.textContent = time;
+    if (hsd) hsd.textContent = dateShort;
+
+    // Dashboard
+    const dl = document.getElementById('dashLiveClock');
+    const dd = document.getElementById('dashLiveDate');
+    if (dl) dl.textContent = time;
+    if (dd) dd.textContent = date;
+  }
+
+  /* ============================================================
+     API HELPER — centralised fetch with loading state
+  ============================================================ */
+  async function apiFetch(url, options = {}) {
+    const res = await fetch(url, { ...options, headers: { 'Content-Type': 'application/json', ...(options.headers || {}) } });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ detail: res.statusText }));
+      throw new Error(err.detail || `HTTP ${res.status}`);
+    }
+    return res.json();
+  }
+
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    btn.disabled = loading;
+    btn.classList.toggle('loading', loading);
+  }
+
+  /* ============================================================
+     LOAD ALL STUDENTS
+  ============================================================ */
+  async function loadStudents() {
+    setLoading('refreshBtn', true);
+    try {
+      const data = await apiFetch(`${BASE_URL}/students`);
+      allStudents = Array.isArray(data) ? data : (data.students || []);
+      renderTable(allStudents);
+      document.getElementById('viewCount').textContent = `${allStudents.length} student${allStudents.length !== 1 ? 's' : ''} found`;
+      updateApiStatus(true);
+    } catch (err) {
+      document.getElementById('viewTableArea').innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">⚠️</div>
+          <p>Failed to load students.<br><span style="color:var(--accent-rose);font-size:12px">${err.message}</span></p>
+        </div>`;
+      document.getElementById('viewCount').textContent = 'Error loading data';
+      updateApiStatus(false);
+    } finally {
+      setLoading('refreshBtn', false);
+    }
+  }
+
+  /* ============================================================
+     RENDER TABLE
+  ============================================================ */
+  function renderTable(students) {
+    const area = document.getElementById('viewTableArea');
+    if (!students.length) {
+      area.innerHTML = `<div class="empty-state"><div class="empty-icon">👥</div><p>No students found in the system.</p></div>`;
+      return;
+    }
+    const rows = students.map(s => `
+      <tr>
+        <td><span class="id-badge">${s.id}</span></td>
+        <td>
+          <span class="student-avatar">${(s.name || '?')[0].toUpperCase()}</span>
+          ${escHtml(s.name || '—')}
+        </td>
+      </tr>`).join('');
+
+    area.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Student Name</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>`;
+  }
+
+  /* ============================================================
+     FILTER TABLE (client-side)
+  ============================================================ */
+  function filterTable() {
+    const q = document.getElementById('viewFilter').value.toLowerCase();
+    const filtered = allStudents.filter(s =>
+      String(s.id).includes(q) ||
+      (s.name || '').toLowerCase().includes(q)
+    );
+    renderTable(filtered);
+  }
+
+  /* ============================================================
+     ADD STUDENT
+  ============================================================ */
+  async function addStudent() {
+    const name = document.getElementById('addName').value.trim();
+    if (!name) { showToast('warning', 'Missing Input', 'Please enter a student name.'); return; }
+
+    setLoading('addBtn', true);
+    try {
+      await apiFetch(`${BASE_URL}/students?name=${encodeURIComponent(name)}`, { method: 'POST' });
+      showToast('success', 'Student Added', `"${name}" has been added successfully.`);
+      document.getElementById('addName').value = '';
+    } catch (err) {
+      showToast('error', 'Add Failed', err.message);
+    } finally {
+      setLoading('addBtn', false);
+    }
+  }
+
+  /* ============================================================
+     SEARCH STUDENT
+  ============================================================ */
+  async function searchStudent() {
+    const id = document.getElementById('searchId').value.trim();
+    if (!id) { showToast('warning', 'Missing Input', 'Please enter a Student ID.'); return; }
+
+    setLoading('searchBtn', true);
+    document.getElementById('searchResult').classList.remove('visible');
+    try {
+      const s = await apiFetch(`${BASE_URL}/students/${id}`);
+      const initials = (s.name || '?')[0].toUpperCase();
+      document.getElementById('searchAvatar').textContent   = initials;
+      document.getElementById('searchName').textContent     = s.name || '—';
+      document.getElementById('searchSubtitle').textContent = `Student · ID ${s.id}`;
+      document.getElementById('searchIdVal').textContent    = s.id;
+      document.getElementById('searchNameVal').textContent  = s.name || '—';
+      document.getElementById('searchResult').classList.add('visible');
+      showToast('success', 'Student Found', `Record for "${s.name}" retrieved.`);
+    } catch (err) {
+      showToast('error', 'Not Found', err.message);
+    } finally {
+      setLoading('searchBtn', false);
+    }
+  }
+
+  /* ============================================================
+     UPDATE STUDENT
+  ============================================================ */
+  async function updateStudent() {
+    const id   = document.getElementById('updateId').value.trim();
+    const name = document.getElementById('updateName').value.trim();
+    if (!id)   { showToast('warning', 'Missing Input', 'Please enter a Student ID.'); return; }
+    if (!name) { showToast('warning', 'Missing Input', 'Please enter the new name.'); return; }
+
+    setLoading('updateBtn', true);
+    try {
+      await apiFetch(`${BASE_URL}/students/${id}?name=${encodeURIComponent(name)}`, { method: 'PUT' });
+      showToast('success', 'Record Updated', `Student ID ${id} has been renamed to "${name}".`);
+      document.getElementById('updateId').value   = '';
+      document.getElementById('updateName').value = '';
+    } catch (err) {
+      showToast('error', 'Update Failed', err.message);
+    } finally {
+      setLoading('updateBtn', false);
+    }
+  }
+
+  /* ============================================================
+     DELETE — Confirmation Modal
+  ============================================================ */
+  function confirmDelete() {
+    const id = document.getElementById('deleteId').value.trim();
+    if (!id) { showToast('warning', 'Missing Input', 'Please enter a Student ID to delete.'); return; }
+    document.getElementById('modalMessage').textContent =
+      `Are you sure you want to permanently delete Student ID ${id}? This action cannot be undone.`;
+    document.getElementById('deleteModal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('deleteModal').classList.remove('open');
+  }
+
+  async function deleteStudent() {
+    const id = document.getElementById('deleteId').value.trim();
+    setLoading('confirmDeleteBtn', true);
+    try {
+      await apiFetch(`${BASE_URL}/students/${id}`, { method: 'DELETE' });
+      showToast('success', 'Student Deleted', `Student ID ${id} has been removed from the system.`);
+      document.getElementById('deleteId').value = '';
+      closeModal();
+    } catch (err) {
+      showToast('error', 'Delete Failed', err.message);
+      closeModal();
+    } finally {
+      setLoading('confirmDeleteBtn', false);
+    }
+  }
+
+  // Close modal on backdrop click
+  document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+
+  // Keyboard: Enter to submit forms
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Enter') return;
+    const page = currentPage;
+    if (page === 'add')    addStudent();
+    if (page === 'search') searchStudent();
+    if (page === 'update') updateStudent();
+    if (page === 'delete') confirmDelete();
+  });
+
+  /* ============================================================
+     DASHBOARD
+  ============================================================ */
+  async function updateDashboard() {
+    setLoading('dashRefreshBtn', true);
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString('en-IN', { hour12: false });
+    const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+
+    try {
+      const data = await apiFetch(`${BASE_URL}/students`);
+      const students = Array.isArray(data) ? data : (data.students || []);
+
+      document.getElementById('dashTotal').textContent     = students.length;
+      document.getElementById('dashApiStatus').textContent = 'Online ✓';
+      document.getElementById('dashDate').textContent      = dateStr;
+      document.getElementById('dashRefreshTime').textContent = timeStr;
+
+      // Recent 5
+      const recent = students.slice(-5).reverse();
+      if (recent.length) {
+        const rows = recent.map(s => `
+          <tr>
+            <td><span class="id-badge">${s.id}</span></td>
+            <td>
+              <span class="student-avatar" style="width:24px;height:24px;font-size:11px;">${(s.name||'?')[0].toUpperCase()}</span>
+              ${escHtml(s.name || '—')}
+            </td>
+          </tr>`).join('');
+        document.getElementById('dashTable').innerHTML = `
+          <table>
+            <thead><tr><th>ID</th><th>Name</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>`;
+      } else {
+        document.getElementById('dashTable').innerHTML = `<div class="empty-state"><div class="empty-icon">📊</div><p>No students yet.</p></div>`;
+      }
+      updateApiStatus(true);
+    } catch (err) {
+      document.getElementById('dashApiStatus').textContent = 'Offline ✗';
+      document.getElementById('dashTable').innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>Could not reach API.<br><span style="color:var(--accent-rose);font-size:12px">${err.message}</span></p></div>`;
+      updateApiStatus(false);
+    } finally {
+      setLoading('dashRefreshBtn', false);
+    }
+  }
+
+  /* ============================================================
+     HOME STATS
+  ============================================================ */
+  async function loadHomeStats() {
+    try {
+      const data = await apiFetch(`${BASE_URL}/students`);
+      const students = Array.isArray(data) ? data : (data.students || []);
+      const count = students.length;
+      document.getElementById('homeCount').textContent    = count;
+      document.getElementById('homeStatTotal').textContent = count;
+      document.getElementById('homeStatStatus').textContent = 'Online ✓';
+      updateApiStatus(true);
+    } catch {
+      document.getElementById('homeCount').textContent    = '—';
+      document.getElementById('homeStatTotal').textContent = '—';
+      document.getElementById('homeStatStatus').textContent = 'Offline ✗';
+      updateApiStatus(false);
+    }
+  }
+
+  /* ============================================================
+     API STATUS INDICATOR
+  ============================================================ */
+  function updateApiStatus(online) {
+    apiOnline = online;
+    const dot  = document.getElementById('statusDot');
+    const text = document.getElementById('apiStatusText');
+    if (online) {
+      dot.classList.remove('offline');
+      text.textContent = 'API Connected';
+    } else {
+      dot.classList.add('offline');
+      text.textContent = 'API Offline';
+    }
+  }
+
+  /* ============================================================
+     TOAST NOTIFICATIONS
+  ============================================================ */
+  const TOAST_ICONS = { success: '✅', error: '❌', warning: '⚠️' };
+
+  function showToast(type, title, message) {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+      <span class="toast-icon">${TOAST_ICONS[type] || 'ℹ️'}</span>
+      <div class="toast-body">
+        <div class="toast-title">${escHtml(title)}</div>
+        <div class="toast-msg">${escHtml(message)}</div>
+      </div>
+      <button class="toast-close" onclick="dismissToast(this)">✕</button>`;
+
+    container.appendChild(toast);
+
+    // Auto remove after 3.5 s
+    setTimeout(() => dismissToast(toast.querySelector('.toast-close')), 3500);
+  }
+
+  function dismissToast(closeBtn) {
+    const toast = closeBtn.closest?.('.toast') || closeBtn;
+    if (!toast || toast.classList.contains('hide')) return;
+    toast.classList.add('hide');
+    setTimeout(() => toast.remove(), 300);
+  }
+
+  /* ============================================================
+     UTILITY — HTML Escape
+  ============================================================ */
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  /* ============================================================
+     INIT
+  ============================================================ */
+  // Start clock
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // Initial home load
+  loadHomeStats();
+
+  // Ping API status periodically
+  setInterval(async () => {
+    try {
+      await fetch(`${BASE_URL}/students`, { signal: AbortSignal.timeout(3000) });
+      updateApiStatus(true);
+    } catch {
+      updateApiStatus(false);
+    }
+  }, 15000);
+</script>
+</body>
+</html>
