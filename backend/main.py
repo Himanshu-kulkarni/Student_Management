@@ -30,6 +30,14 @@ conn = psycopg2.connect(
 
 cursor = conn.cursor()
 
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS students (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100)
+)
+""")
+conn.commit()
+
 
 @app.get("/")
 def home():
