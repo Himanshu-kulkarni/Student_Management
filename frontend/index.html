@@ -1579,7 +1579,7 @@
 
     setLoading('addBtn', true);
     try {
-      await apiFetch(`${BASE_URL}/students?name=${encodeURIComponent(name)}`, { method: 'POST' });
+      await apiFetch(`${BASE_URL}/add_student?name=${encodeURIComponent(name)}`, { method: 'POST' });
       showToast('success', 'Student Added', `"${name}" has been added successfully.`);
       document.getElementById('addName').value = '';
     } catch (err) {
